@@ -85,6 +85,9 @@ const appConfig = {
       connectionString: String(process.env.PUB_SUB),
     },
   },
+  github: {
+    host: process.env.BASE_URL_GUTHUB,
+  },
 };
 
 export default appConfig;

@@ -7,7 +7,9 @@ import { Commit } from '../models/Commit';
 import config from '../../../../config/config';
 import logger from '../../../../shared/utils/logger';
 import DatabaseError from '@shared/error/database.error';
+import { injectable } from 'tsyringe';
 
+@injectable()
 export class PostgresqlDatabase implements IDatabase {
   private knex: IKnex;
 
