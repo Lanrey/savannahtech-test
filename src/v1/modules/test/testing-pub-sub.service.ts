@@ -5,7 +5,7 @@ class TestTopicService {
 
     console.log(dataFromPublisher);
     return {
-      service: '9jaPay base template',
+      service: 'Savannah base template',
       version: '1.0.0',
     };
   }
