@@ -5,6 +5,7 @@ import { repositoryEvents, CommitEvent, RepositoryUpdateEvent } from '../Events/
 import { injectable } from 'tsyringe';
 import logger from '@shared/utils/logger';
 import DatabaseError from '@shared/error/database.error';
+import { CacheService } from './CacheService';
 
 @injectable()
 export class RepositoryMonitor {
@@ -12,7 +13,11 @@ export class RepositoryMonitor {
   private database: IDatabase;
   private cronJob: cron.ScheduleTask | null = null;
 
-  constructor(githubApiService: GithubApiService, database: IDatabase) {
+  constructor(
+    githubApiService: GithubApiService,
+    database: IDatabase,
+    private readonly cacheService: CacheService,
+  ) {
     this.githubApiService = githubApiService;
     this.database = database;
   }
@@ -58,6 +63,8 @@ export class RepositoryMonitor {
         }
       }
 
+      await this.cacheService.clearRepositoryCache(owner, repo);
+
       const updateEvent: RepositoryUpdateEvent = { owner, repo, updatedAt: new Date() };
       repositoryEvents.emitRepositoryUpdated(updateEvent);
 
@@ -78,6 +85,7 @@ export class RepositoryMonitor {
       const repositoryId = await this.database.saveRepository(repoInfo);
 
       await this.database.deleteCommitsSince(repositoryId, date);
+      await this.cacheService.clearRepositoryCache(owner, repo);
 
       console.log(`Reset Collection for ${owner}/${repo} since ${date}`);
       logger.info(`Reset Collection for ${owner}/${repo} since ${date}`);

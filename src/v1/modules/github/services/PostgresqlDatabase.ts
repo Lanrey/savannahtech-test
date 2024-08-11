@@ -8,10 +8,12 @@ import config from '../../../../config/config';
 import logger from '../../../../shared/utils/logger';
 import DatabaseError from '@shared/error/database.error';
 import { injectable } from 'tsyringe';
+import { CacheService } from './CacheService';
 
 @injectable()
 export class PostgresqlDatabase implements IDatabase {
   private knex: IKnex;
+  private cacheService: CacheService;
 
   constructor() {
     this.knex = Knex(config.database);
@@ -66,6 +68,7 @@ export class PostgresqlDatabase implements IDatabase {
         open_issues_count: repo.open_issues_count,
         watchers_count: repo.watchers_count,
       });
+      await this.cacheService.clearRepositoryCache(repo.owner.login, repo.name);
       return result.id;
     } catch (error) {
       logger.error(error, 'Database Service - Create Repostory Failed');
@@ -83,6 +86,10 @@ export class PostgresqlDatabase implements IDatabase {
         date: commit.commit.author.date,
         url: commit.html_url,
       });
+      const repository = await Repository.query().findById(repositoryId);
+      if (repository) {
+        await this.cacheService.clearRepositoryCache(repository.name.split('/')[0], repository.name.split('/')[1]);
+      }
     } catch (error) {
       logger.error(error, 'Database Service - Save Commit Failed');
       throw new DatabaseError('Database Service - Save Commit Failed');
@@ -91,12 +98,18 @@ export class PostgresqlDatabase implements IDatabase {
 
   async getTopCommitAuthors(n: number): Promise<any[]> {
     try {
-      return Commit.query()
+      const cacheKey = `topAuthors:${n}`;
+      const cachedResult = await this.cacheService.get(cacheKey);
+      if (cachedResult) return cachedResult;
+      const result = await Commit.query()
         .select('author')
         .count('* as commit_count')
         .groupBy('author')
         .orderBy('commit_count', 'desc')
         .limit(n);
+
+      await this.cacheService.set(cacheKey, result, 3600);
+      return result;
     } catch (error) {
       logger.error(error, 'Database Service - Getting Top Commit Authors Failed');
       throw new DatabaseError('Database Service - Getting Top Commit Authors Failed');
@@ -105,6 +118,9 @@ export class PostgresqlDatabase implements IDatabase {
 
   async getCommitsByRepository(repositoryName: string, limit?: number): Promise<any[]> {
     try {
+      const cacheKey = `commits:${repositoryName}:${limit || 'all'}`;
+      const cachedResult = await this.cacheService.get(cacheKey);
+      if (cachedResult) return cachedResult;
       const query = Commit.query()
         .join('repositories', 'commits.repository_id', 'repositories.id')
         .where('repositories.name', repositoryName)
@@ -114,7 +130,10 @@ export class PostgresqlDatabase implements IDatabase {
         query.limit(limit);
       }
 
-      return query;
+      const result = await query;
+
+      await this.cacheService.set(cacheKey, result, 3600);
+      return result;
     } catch (error) {
       logger.error(error, 'Database Service - Getting Top Commit Authors Failed');
       throw new DatabaseError('Database Service - Getting Top Commit Authors Failed');
@@ -142,6 +161,11 @@ export class PostgresqlDatabase implements IDatabase {
   async deleteCommitsSince(repositoryId: number, date: string): Promise<void> {
     try {
       await Commit.query().where('repository_id', repositoryId).where('date', '>=', date).delete();
+
+      const repository = await Repository.query().findById(repositoryId);
+      if (repository) {
+        await this.cacheService.clearRepositoryCache(repository.name.split('/')[0], repository.name.split('/')[1]);
+      }
     } catch (error) {
       logger.error(error, 'Database Service - Delete Commit Since Failed');
       throw new DatabaseError('Database Service - Delete Commit Since Failed');
