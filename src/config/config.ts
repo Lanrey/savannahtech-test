@@ -25,7 +25,7 @@ const config: Config = {
   cronSchedule: process.env.CRON_SCHEDULE || '0 * * * *',
   startDate: process.env.START_DATE,
   database: {
-    client: 'pg',
+    client: 'postgres',
     connection: {
       host: process.env.DB_HOST || 'localhost',
       port: parseInt(process.env.DB_PORT || '5432', 10),
