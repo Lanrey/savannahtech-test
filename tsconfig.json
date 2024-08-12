@@ -18,7 +18,8 @@
     "paths": {
       "@config/*": ["src/config/*"],
       "@shared/*": ["src/shared/*"],
-      "@utils/*": ["src/shared/utils/*"]
+      "@utils/*": ["src/shared/utils/*"],
+      "@github/*": ["v1/modules/github/*"]
     }
   },
   "include": ["src/**/*.ts", "src/**/*.json"],
