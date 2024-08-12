@@ -6,7 +6,7 @@
   "author": "Retailloop Solution Limited",
   "scripts": {
     "start:dev": "nodemon",
-    "start": "npm run build & node dist/server.js",
+    "start": "npm run build && node dist/server.js",
     "build": "NODE_ENV=production tsc --resolveJsonModule",
     "postbuild": "copyfiles -u 1 \"src/**/*.proto\" dist",
     "prepare": "husky install",
