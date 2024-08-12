@@ -1,6 +1,6 @@
 import Knex from 'knex';
 import { Knex as IKnex } from 'knex/types';
-import { Model } from 'objection';
+import { Model, transaction } from 'objection';
 import { IDatabase } from '../Interfaces/IDatabase';
 import { Repository } from '../models/Repository';
 import { Commit } from '../models/Commit';
@@ -67,43 +67,47 @@ export class PostgresqlDatabase implements IDatabase {
     }
   }
 
-  async saveRepository(repo: any): Promise<number> {
-    try {
-      const result = await Repository.query().insert({
-        name: repo.name,
-        description: repo.description,
-        url: repo.html_url,
-        language: repo.language,
-        forks_count: repo.forks_count,
-        stars_count: repo.stargazers_count,
-        open_issues_count: repo.open_issues_count,
-        watchers_count: repo.watchers_count,
-      });
-      await this.cacheService.clearRepositoryCache(repo.owner.login, repo.name);
-      return result.id;
-    } catch (error) {
-      logger.error(error, 'Database Service - Create Repostory Failed');
-      throw new DatabaseError('Database Service - Create Repo Failed');
-    }
-  }
-
   async saveCommit(repositoryId: number, commit: any): Promise<void> {
     try {
-      await Commit.query().insert({
-        repository_id: repositoryId,
-        sha: commit.sha,
-        message: commit.commit.message,
-        author: commit.commit.author.name,
-        date: commit.commit.author.date,
-        url: commit.html_url,
+      await transaction(Commit.knex(), async (trx) => {
+        await Commit.query(trx).insert({
+          repository_id: repositoryId,
+          sha: commit.sha,
+          message: commit.commit.message,
+          author: commit.commit.author.name,
+          date: commit.commit.author.date,
+          url: commit.html_url,
+        });
+        const repository = await Repository.query(trx).findById(repositoryId);
+        if (repository) {
+          await this.cacheService.clearRepositoryCache(repository.name.split('/')[0], repository.name.split('/')[1]);
+        }
       });
-      const repository = await Repository.query().findById(repositoryId);
-      if (repository) {
-        await this.cacheService.clearRepositoryCache(repository.name.split('/')[0], repository.name.split('/')[1]);
-      }
     } catch (error) {
       logger.error(error, 'Database Service - Save Commit Failed');
       throw new DatabaseError('Database Service - Save Commit Failed');
+    }
+  }
+
+  async saveRepository(repo: any): Promise<number> {
+    try {
+      return await transaction(Repository.knex(), async (trx) => {
+        const result = await Repository.query(trx).insert({
+          name: repo.name,
+          description: repo.description,
+          url: repo.html_url,
+          language: repo.language,
+          forks_count: repo.forks_count,
+          stars_count: repo.stargazers_count,
+          open_issues_count: repo.open_issues_count,
+          watchers_count: repo.watchers_count,
+        });
+        await this.cacheService.clearRepositoryCache(repo.owner.login, repo.name);
+        return result.id;
+      });
+    } catch (error) {
+      logger.error(error, 'Database Service - Create Repository Failed');
+      throw new DatabaseError('Database Service - Create Repo Failed');
     }
   }
 
@@ -132,6 +136,12 @@ export class PostgresqlDatabase implements IDatabase {
       const cacheKey = `commits:${repositoryName}:${limit || 'all'}`;
       const cachedResult = await this.cacheService.get(cacheKey);
       if (cachedResult) return cachedResult;
+
+      const repository = await Repository.query().where('name', repositoryName).first();
+
+      if (!repository) {
+        throw new DatabaseError(`Repository '${repositoryName}' not found`);
+      }
       const query = Commit.query()
         .join('repositories', 'commits.repository_id', 'repositories.id')
         .where('repositories.name', repositoryName)
