@@ -2,25 +2,18 @@ import { GithubApiService } from './GithubApiService';
 import { IDatabase } from '../Interfaces/IDatabase';
 import cron from 'node-cron';
 import { repositoryEvents, CommitEvent, RepositoryUpdateEvent } from '../events/repositoryEvents';
-import { injectable } from 'tsyringe';
+import { injectable, inject } from 'tsyringe';
 import logger from '@shared/utils/logger';
 import DatabaseError from '@shared/error/database.error';
-import { CacheService } from './CacheService';
 
 @injectable()
 export class RepositoryMonitor {
-  private readonly githubApiService: GithubApiService;
-  private database: IDatabase;
   private cronJob: cron.ScheduleTask | null = null;
 
   constructor(
-    githubApiService: GithubApiService,
-    database: IDatabase,
-    private readonly cacheService: CacheService,
-  ) {
-    this.githubApiService = githubApiService;
-    this.database = database;
-  }
+    @inject(GithubApiService) private readonly githubApiService: GithubApiService,
+    @inject('database') private readonly database: IDatabase,
+  ) {}
 
   async monitorRepository(owner: string, repo: string, cronExpression: string, startDate?: string): Promise<void> {
     if (this.cronJob) {
@@ -63,8 +56,6 @@ export class RepositoryMonitor {
         }
       }
 
-      await this.cacheService.clearRepositoryCache(owner, repo);
-
       const updateEvent: RepositoryUpdateEvent = { owner, repo, updatedAt: new Date() };
       repositoryEvents.emitRepositoryUpdated(updateEvent);
 
@@ -85,7 +76,7 @@ export class RepositoryMonitor {
       const repositoryId = await this.database.saveRepository(repoInfo);
 
       await this.database.deleteCommitsSince(repositoryId, date);
-      await this.cacheService.clearRepositoryCache(owner, repo);
+
 
       console.log(`Reset Collection for ${owner}/${repo} since ${date}`);
       logger.info(`Reset Collection for ${owner}/${repo} since ${date}`);
@@ -117,8 +108,6 @@ export class RepositoryMonitor {
           repositoryEvents.emitNewCommit(commitEvent);
         }
       }
-
-      await this.cacheService.clearRepositoryCache(owner, repo);
 
       const updateEvent: RepositoryUpdateEvent = { owner, repo, updatedAt: new Date() };
       repositoryEvents.emitRepositoryUpdated(updateEvent);

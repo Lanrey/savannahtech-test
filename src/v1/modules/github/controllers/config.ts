@@ -1,44 +1,56 @@
-import { injectable } from 'tsyringe';
+import { injectable, container } from 'tsyringe';
 import { FastifyReply, FastifyRequest } from 'fastify';
 import { SuccessResponse } from '@shared/utils/response.util';
-import { DatabaseFactory, DatabaseType } from '../factories/DatabaseFactory';
+import { createDatabase, DatabaseType } from '../factories/DatabaseFactory';
 import { RepositoryMonitor } from '../services/RepositoryMonitor';
 import { setupRepositoryEventHandlers } from '../events/repositoryEventHandlers';
 import config from '../../../../config/config';
 import ConfigDto from '../dtos/config.dto';
 
 @injectable()
-class ConfigController {
-  constructor(private readonly repoMonitor: RepositoryMonitor) {}
+export class ConfigController {
+  private repoMonitor: RepositoryMonitor;
+
+  constructor() {}
 
   dynamicConfig = async (req: FastifyRequest<{ Body: ConfigDto }>, res: FastifyReply) => {
-    const { defaultOwner, defaultRepo, databaseType, cronSchedule, startDate } = req.body;
+    try {
+      const { defaultOwner, defaultRepo, databaseType, cronSchedule, startDate } = req.body;
 
-    // update config //
-    config.defaultOwner = defaultOwner || config.defaultOwner;
-    config.defaultRepo = defaultRepo || config.defaultRepo;
-    config.databaseType = databaseType || config.databaseType;
-    config.cronSchedule = cronSchedule || config.cronSchedule;
-    config.startDate = startDate || config.startDate;
+      // Update config with provided values or fallback to existing values
+      config.defaultOwner = defaultOwner || config.defaultOwner;
+      config.defaultRepo = defaultRepo || config.defaultRepo;
+      config.databaseType = databaseType || config.databaseType;
+      config.cronSchedule = cronSchedule || config.cronSchedule;
+      config.startDate = startDate || config.startDate;
 
-    const database = DatabaseFactory.createDatabase(config.databaseType as DatabaseType);
-    await database.init();
+      // Create and initialize the database
+      const database = createDatabase(config.databaseType as DatabaseType);
+      await database.init();
 
-    setupRepositoryEventHandlers();
+      container.registerInstance('database', database);
 
-    if (this.repoMonitor) {
-      this.repoMonitor.stopMonitoring();
+      // Setup repository event handlers
+      setupRepositoryEventHandlers();
+
+      // Stop the current monitoring, if active
+      if (this.repoMonitor) {
+        this.repoMonitor.stopMonitoring();
+      }
+
+      this.repoMonitor = container.resolve(RepositoryMonitor);
+
+      // Initialize and start monitoring the repository
+      await this.repoMonitor.initializeAndMonitor(
+        config.defaultOwner,
+        config.defaultRepo,
+        config.cronSchedule,
+        config.startDate,
+      );
+
+      res.send(SuccessResponse('Configuration updated successfully, You can now query the services and database'));
+    } catch (error) {
+      res.status(500).send({ error: 'An error occurred while updating the configuration' });
     }
-
-    await this.repoMonitor.initializeAndMonitor(
-      config.defaultOwner,
-      config.defaultRepo,
-      config.cronSchedule,
-      config.startDate,
-    );
-
-    res.send(SuccessResponse('Configuration updated successfully, You can now query the services and database'));
   };
 }
-
-export default ConfigController;

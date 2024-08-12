@@ -9,6 +9,8 @@ import { ErrorResponse } from '@shared/utils/response.util';
 import Logger from '@shared/utils/logger';
 import AppError from '@shared/error/app.error';
 import { OnStartupService } from './v1/modules/github/services/OnStartupService';
+// import { PostgresqlDatabase } from './v1/modules/github/services/PostgresqlDatabase';
+// import { IDatabase } from './v1/modules/github/Interfaces/IDatabase';
 
 // register event subscribers
 /*
@@ -21,6 +23,8 @@ import { UserTierUpgradeTierJobProcessor } from './v1/modules/customer/services/
 */
 
 function bootstrapApp(fastify) {
+  // initializeDatabase();
+  
   intializeGithubMonitor();
 
   registerThirdPartyModules(fastify);
@@ -83,6 +87,14 @@ function registerCustomValidationRules() {
 function initializeTasks() {
   // container.resolve(RetryAccountCreationService).registerSchedule();
 }
+
+/*
+
+function initializeDatabase() {
+  container.registerSingleton<IDatabase>('Database', PostgresqlDatabase);
+}
+
+*/
 
 function initializeJobProccessor() {
   // container.resolve(UserTierUpgradeTierJobProcessor).initializeProccessor();

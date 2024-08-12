@@ -1,6 +1,6 @@
 import { FastifyPluginAsync } from 'fastify';
 import { container } from 'tsyringe';
-import ConfigController from '../controllers/config';
+import { ConfigController } from '../controllers/config';
 import validate from '@shared/middlewares/validator.middleware';
 import { configRules } from '../validations/config.validation';
 

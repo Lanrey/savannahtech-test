@@ -1,3 +1,5 @@
+import ObjectLiteral from '@shared/types/object-literal.type';
+
 export interface DatabseConfig {
   client: string;
   connection: {
@@ -6,6 +8,7 @@ export interface DatabseConfig {
     user: string;
     password: string;
     database: string;
+    ssl: ObjectLiteral;
   };
 }
 
@@ -32,6 +35,9 @@ const config: Config = {
       user: process.env.DB_USER || 'postgres',
       password: process.env.DB_PASSWORD || 'password',
       database: process.env.DB_NAME || 'github_monitor',
+      ssl: {
+        rejectUnauthorized: false,
+      },
     },
   },
 };

@@ -7,15 +7,14 @@ import { Commit } from '../models/Commit';
 import config from '../../../../config/config';
 import logger from '../../../../shared/utils/logger';
 import DatabaseError from '@shared/error/database.error';
-import { injectable } from 'tsyringe';
+import { inject, injectable } from 'tsyringe';
 import { CacheService } from './CacheService';
 
 @injectable()
 export class PostgresqlDatabase implements IDatabase {
   private knex: IKnex;
-  private cacheService: CacheService;
 
-  constructor() {
+  constructor(@inject(CacheService) private readonly cacheService: CacheService) {
     this.knex = Knex(config.database);
     Model.knex(this.knex);
   }
@@ -79,9 +78,8 @@ export class PostgresqlDatabase implements IDatabase {
           url: commit.html_url,
         });
         const repository = await Repository.query(trx).findById(repositoryId);
-        if (repository) {
-          await this.cacheService.clearRepositoryCache(repository.name.split('/')[0], repository.name.split('/')[1]);
-        }
+
+        return repository;
       });
     } catch (error) {
       logger.error(error, 'Database Service - Save Commit Failed');
@@ -92,17 +90,21 @@ export class PostgresqlDatabase implements IDatabase {
   async saveRepository(repo: any): Promise<number> {
     try {
       return await transaction(Repository.knex(), async (trx) => {
-        const result = await Repository.query(trx).insert({
-          name: repo.name,
-          description: repo.description,
-          url: repo.html_url,
-          language: repo.language,
-          forks_count: repo.forks_count,
-          stars_count: repo.stargazers_count,
-          open_issues_count: repo.open_issues_count,
-          watchers_count: repo.watchers_count,
-        });
-        await this.cacheService.clearRepositoryCache(repo.owner.login, repo.name);
+        console.log('repo', repo);
+        const result = await Repository.query(trx)
+          .insert({
+            name: repo.name,
+            description: repo.description,
+            url: repo.html_url,
+            language: repo.language,
+            forks_count: repo.forks_count,
+            stars_count: repo.stargazers_count,
+            open_issues_count: repo.open_issues_count,
+            watchers_count: repo.watchers_count,
+          })
+          .returning('*');
+
+        console.log('result', result);
         return result.id;
       });
     } catch (error) {
@@ -113,9 +115,6 @@ export class PostgresqlDatabase implements IDatabase {
 
   async getTopCommitAuthors(n: number): Promise<any[]> {
     try {
-      const cacheKey = `topAuthors:${n}`;
-      const cachedResult = await this.cacheService.get(cacheKey);
-      if (cachedResult) return cachedResult;
       const result = await Commit.query()
         .select('author')
         .count('* as commit_count')
@@ -123,7 +122,6 @@ export class PostgresqlDatabase implements IDatabase {
         .orderBy('commit_count', 'desc')
         .limit(n);
 
-      await this.cacheService.set(cacheKey, result, 3600);
       return result;
     } catch (error) {
       logger.error(error, 'Database Service - Getting Top Commit Authors Failed');

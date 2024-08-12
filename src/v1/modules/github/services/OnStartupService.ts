@@ -1,15 +1,21 @@
-import { injectable } from 'tsyringe';
-import { DatabaseFactory, DatabaseType } from '../factories/DatabaseFactory';
+import { injectable, container } from 'tsyringe';
+import { createDatabase, DatabaseType } from '../factories/DatabaseFactory';
 import { RepositoryMonitor } from './RepositoryMonitor';
 import config from '@config/config';
+import { IDatabase } from '../Interfaces/IDatabase';
 
 @injectable()
 export class OnStartupService {
-  constructor(private readonly repoMonitor: RepositoryMonitor) {}
+  private repoMonitor: RepositoryMonitor;
+  constructor() {}
 
   async updateConfig() {
-    const database = DatabaseFactory.createDatabase(config.databaseType as DatabaseType);
+    const database: IDatabase = createDatabase(config.databaseType as DatabaseType);
     await database.init();
+
+    container.registerInstance('database', database);
+
+    this.repoMonitor = container.resolve(RepositoryMonitor);
 
     if (this.repoMonitor) {
       this.repoMonitor.stopMonitoring();

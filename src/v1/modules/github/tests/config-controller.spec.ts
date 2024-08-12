@@ -1,8 +1,8 @@
 import 'reflect-metadata';
 import { FastifyReply, FastifyRequest } from 'fastify';
 import { RepositoryMonitor } from '../services/RepositoryMonitor';
-import ConfigController from '../controllers/config';
-import { DatabaseFactory } from '../factories/DatabaseFactory';
+import { ConfigController } from '../controllers/config';
+import { createDatabase } from '../factories/DatabaseFactory';
 import config from '../../../../config/config';
 import { SuccessResponse } from '../../../../shared/utils/response.util';
 import { container } from 'tsyringe';
@@ -62,7 +62,7 @@ describe('ConfigController', () => {
     };
 
     const mockDatabase = { init: jest.fn() };
-    (DatabaseFactory.createDatabase as jest.Mock).mockReturnValue(mockDatabase);
+    (createDatabase as jest.Mock).mockReturnValue(mockDatabase);
 
     await configController.dynamicConfig(mockRequest, mockReply);
 
@@ -77,7 +77,7 @@ describe('ConfigController', () => {
     mockRequest.body = {};
 
     const mockDatabase = { init: jest.fn() };
-    (DatabaseFactory.createDatabase as jest.Mock).mockReturnValue(mockDatabase);
+    (createDatabase as jest.Mock).mockReturnValue(mockDatabase);
 
     await configController.dynamicConfig(mockRequest, mockReply);
 
