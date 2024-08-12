@@ -1,31 +1,24 @@
 import { FastifyReply, FastifyRequest } from 'fastify';
 import { injectable } from 'tsyringe';
-import Redis from 'ioredis';
 import httpStatus from 'http-status';
 import { getDB } from '../../../database';
-import { RedisClient } from '@shared/redis-client/redis-client';
 
 @injectable()
 class HealthService {
-  private redisClient: Redis;
-
-  constructor(redisClient: RedisClient) {
-    this.redisClient = redisClient.get();
-  }
+  constructor() {}
 
   async readinessCheck(req: FastifyRequest, reply: FastifyReply) {
     const postgresHealth = await this.checkPostgresHealth();
-    const redisHealth = await this.checkRedisHealth();
 
-    if (postgresHealth.status === 'UP' && redisHealth.status === 'OK') {
+    if (postgresHealth.status === 'UP') {
       reply.code(httpStatus.OK).send({
         status: 'UP',
-        checks: [postgresHealth, redisHealth],
+        checks: [postgresHealth],
       });
     } else {
       reply.code(httpStatus.SERVICE_UNAVAILABLE).send({
         status: 'DOWN',
-        checks: [postgresHealth, redisHealth],
+        checks: [postgresHealth],
       });
     }
   }
@@ -56,24 +49,6 @@ class HealthService {
       name,
       status,
       reason,
-    };
-  }
-
-  private async checkRedisHealth() {
-    const name = 'redis';
-    let status = 'OK';
-
-    try {
-      if ((await this.redisClient.ping()) !== 'PONG') {
-        status = 'DEGRADED';
-      }
-    } catch (err: any) {
-      status = 'DEGRADED';
-    }
-
-    return {
-      name,
-      status,
     };
   }
 }

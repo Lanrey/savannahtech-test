@@ -87,7 +87,9 @@ const appConfig = {
   },
   github: {
     host: process.env.BASE_URL_GUTHUB,
+    token: process.env.GITHUB_TOKEN,
   },
 };
 
 export default appConfig;
+

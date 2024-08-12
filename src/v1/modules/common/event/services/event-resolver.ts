@@ -1,5 +1,5 @@
 import { injectable } from 'tsyringe';
-import TestTopicService from '../../../test/testing-pub-sub.service';
+import SeedTopicService from '../../../test/seed-pub-sub.service';
 import ObjectLiteral from '@shared/types/object-literal.type';
 import logger from '@shared/utils/logger';
 
@@ -7,10 +7,10 @@ import logger from '@shared/utils/logger';
 class EventResolver {
   private eventMap = {
     // map topic name to handler processing the event //
-    'test-asoro-template': this.testTopicService,
+    'test-asoro-template': this.seedTopicService,
   };
 
-  constructor(private readonly testTopicService: TestTopicService) {}
+  constructor(private readonly seedTopicService: SeedTopicService) {}
 
   async processEvent(topic: string, payload: ObjectLiteral) {
     console.log({ topic, payload }, 'Testing here');

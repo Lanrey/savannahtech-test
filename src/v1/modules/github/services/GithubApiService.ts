@@ -12,6 +12,9 @@ export class GithubApiService {
   constructor() {
     this.githubHttpClient = HTTPClient.create({
       baseURL: appConfig.github.host,
+      headers: {
+        Authorization: `Bearer ${appConfig.github.token}`,
+      },
     });
   }
 
@@ -54,8 +57,12 @@ export class GithubApiService {
         if (pagesRemaining) {
           url = linkHeader.match(nextPattern)[0];
           page++;
+
+          console.log('fetching data', data);
         }
       }
+
+      console.log('final data', data);
 
       return data;
     } catch (error) {

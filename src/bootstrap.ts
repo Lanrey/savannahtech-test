@@ -24,7 +24,9 @@ import { UserTierUpgradeTierJobProcessor } from './v1/modules/customer/services/
 
 function bootstrapApp(fastify) {
   // initializeDatabase();
-  
+
+  subscribeToExternalEvents();
+
   intializeGithubMonitor();
 
   registerThirdPartyModules(fastify);
@@ -34,8 +36,6 @@ function bootstrapApp(fastify) {
   initializeTasks();
 
   initializeJobProccessor();
-
-  subscribeToExternalEvents();
 
   setErrorHandler(fastify);
 }

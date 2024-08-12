@@ -7,14 +7,13 @@ import { Commit } from '../models/Commit';
 import config from '../../../../config/config';
 import logger from '../../../../shared/utils/logger';
 import DatabaseError from '@shared/error/database.error';
-import { inject, injectable } from 'tsyringe';
-import { CacheService } from './CacheService';
+import { injectable } from 'tsyringe';
 
 @injectable()
 export class PostgresqlDatabase implements IDatabase {
   private knex: IKnex;
 
-  constructor(@inject(CacheService) private readonly cacheService: CacheService) {
+  constructor() {
     this.knex = Knex(config.database);
     Model.knex(this.knex);
   }
@@ -64,6 +63,41 @@ export class PostgresqlDatabase implements IDatabase {
         table.index('date');
       });
     }
+
+    const hasOutBoxTable = await this.knex.schema.hasTable('outbox');
+    if (!hasOutBoxTable) {
+      await this.knex.schema.createTable('outbox', (table) => {
+        table.uuid('id').primary();
+        table.uuid('eventId');
+        table.string('type');
+        table.jsonb('payload');
+        table.timestamps(true, true);
+      });
+    }
+  }
+
+  async saveRepository(repo: any): Promise<number> {
+    try {
+      return await transaction(Repository.knex(), async (trx) => {
+        const result = await Repository.query(trx)
+          .insert({
+            name: repo.name,
+            description: repo.description,
+            url: repo.html_url,
+            language: repo.language,
+            forks_count: repo.forks_count,
+            stars_count: repo.stargazers_count,
+            open_issues_count: repo.open_issues_count,
+            watchers_count: repo.watchers_count,
+          })
+          .returning('*');
+
+        return result.id;
+      });
+    } catch (error) {
+      logger.error(error, 'Database Service - Create Repository Failed');
+      throw new DatabaseError('Database Service - Create Repo Failed');
+    }
   }
 
   async saveCommit(repositoryId: number, commit: any): Promise<void> {
@@ -87,32 +121,6 @@ export class PostgresqlDatabase implements IDatabase {
     }
   }
 
-  async saveRepository(repo: any): Promise<number> {
-    try {
-      return await transaction(Repository.knex(), async (trx) => {
-        console.log('repo', repo);
-        const result = await Repository.query(trx)
-          .insert({
-            name: repo.name,
-            description: repo.description,
-            url: repo.html_url,
-            language: repo.language,
-            forks_count: repo.forks_count,
-            stars_count: repo.stargazers_count,
-            open_issues_count: repo.open_issues_count,
-            watchers_count: repo.watchers_count,
-          })
-          .returning('*');
-
-        console.log('result', result);
-        return result.id;
-      });
-    } catch (error) {
-      logger.error(error, 'Database Service - Create Repository Failed');
-      throw new DatabaseError('Database Service - Create Repo Failed');
-    }
-  }
-
   async getTopCommitAuthors(n: number): Promise<any[]> {
     try {
       const result = await Commit.query()
@@ -131,10 +139,6 @@ export class PostgresqlDatabase implements IDatabase {
 
   async getCommitsByRepository(repositoryName: string, limit?: number): Promise<any[]> {
     try {
-      const cacheKey = `commits:${repositoryName}:${limit || 'all'}`;
-      const cachedResult = await this.cacheService.get(cacheKey);
-      if (cachedResult) return cachedResult;
-
       const repository = await Repository.query().where('name', repositoryName).first();
 
       if (!repository) {
@@ -150,8 +154,6 @@ export class PostgresqlDatabase implements IDatabase {
       }
 
       const result = await query;
-
-      await this.cacheService.set(cacheKey, result, 3600);
       return result;
     } catch (error) {
       logger.error(error, 'Database Service - Getting Top Commit Authors Failed');
@@ -180,11 +182,6 @@ export class PostgresqlDatabase implements IDatabase {
   async deleteCommitsSince(repositoryId: number, date: string): Promise<void> {
     try {
       await Commit.query().where('repository_id', repositoryId).where('date', '>=', date).delete();
-
-      const repository = await Repository.query().findById(repositoryId);
-      if (repository) {
-        await this.cacheService.clearRepositoryCache(repository.name.split('/')[0], repository.name.split('/')[1]);
-      }
     } catch (error) {
       logger.error(error, 'Database Service - Delete Commit Since Failed');
       throw new DatabaseError('Database Service - Delete Commit Since Failed');

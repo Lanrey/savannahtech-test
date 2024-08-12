@@ -1,20 +1,19 @@
 import { IDatabase } from '../Interfaces/IDatabase';
-import { CacheService } from '../services/CacheService';
 import { PostgresqlDatabase } from '../services/PostgresqlDatabase';
-import { injectable, inject, container } from 'tsyringe';
+import { injectable, container } from 'tsyringe';
 
 export enum DatabaseType {
   PostgreSQL = 'postgresql',
   // Add more database types here as needed, e.g., MongoDB, MySQL
 }
 
-type DatabaseCreator = (cacheService: CacheService) => IDatabase;
+type DatabaseCreator = () => IDatabase;
 
 @injectable()
 export class DatabaseFactory {
   private databaseCreators: Map<DatabaseType, DatabaseCreator>;
 
-  constructor(@inject(CacheService) private cacheService: CacheService) {
+  constructor() {
     this.databaseCreators = new Map<DatabaseType, DatabaseCreator>([
       [DatabaseType.PostgreSQL, () => container.resolve(PostgresqlDatabase)],
       // Add more database types here as needed
@@ -26,7 +25,7 @@ export class DatabaseFactory {
     if (!creator) {
       throw new Error(`Unsupported database type: ${type}`);
     }
-    return creator(this.cacheService);
+    return creator();
   }
 }
 

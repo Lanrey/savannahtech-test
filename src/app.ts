@@ -1,11 +1,9 @@
 import fastify, { FastifyInstance } from 'fastify';
 import { Server, IncomingMessage, ServerResponse } from 'http';
-// import { container } from 'tsyringe';
 import bootstrapApp from './bootstrap';
 import RouteVersion from '@config/route.config';
 import appRoute from './v1/modules/app/app.route';
 import healthRoute from './v1/modules/health/health.route';
-// import { RedisClient } from '@shared/redis-client/redis-client';
 import configRoute from './v1/modules/github/routes/config';
 import repoRoute from './v1/modules/github/routes/repo';
 
@@ -33,8 +31,6 @@ class App {
 
   public async close() {
     await this.fastify.close();
-
-    //await container.resolve(RedisClient).close();
   }
 
   public listen(port: number, address = '0.0.0.0') {

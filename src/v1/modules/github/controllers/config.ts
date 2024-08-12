@@ -6,12 +6,17 @@ import { RepositoryMonitor } from '../services/RepositoryMonitor';
 import { setupRepositoryEventHandlers } from '../events/repositoryEventHandlers';
 import config from '../../../../config/config';
 import ConfigDto from '../dtos/config.dto';
+import PublishEvent from '../../common/event/services/publish-event-service';
+import { v4 as uuidv4 } from 'uuid';
 
 @injectable()
 export class ConfigController {
   private repoMonitor: RepositoryMonitor;
+  private publishEvent: PublishEvent;
 
-  constructor() {}
+  constructor() {
+    this.publishEvent = container.resolve(PublishEvent);
+  }
 
   dynamicConfig = async (req: FastifyRequest<{ Body: ConfigDto }>, res: FastifyReply) => {
     try {
@@ -40,6 +45,15 @@ export class ConfigController {
 
       this.repoMonitor = container.resolve(RepositoryMonitor);
 
+      await this.publishEvent.execute({
+        eventId: uuidv4(),
+        type: 'test-asoro-template',
+        payload: config,
+        saveIfPublishFailed: true,
+      });
+
+      /*
+
       // Initialize and start monitoring the repository
       await this.repoMonitor.initializeAndMonitor(
         config.defaultOwner,
@@ -47,6 +61,8 @@ export class ConfigController {
         config.cronSchedule,
         config.startDate,
       );
+
+      */
 
       res.send(SuccessResponse('Configuration updated successfully, You can now query the services and database'));
     } catch (error) {

@@ -26,7 +26,7 @@ const config: Config = {
   defaultRepo: process.env.DEFAULT_REPO || 'chromium',
   databaseType: process.env.DATABASE_TYPE || 'postgresql',
   cronSchedule: process.env.CRON_SCHEDULE || '0 * * * *',
-  startDate: process.env.START_DATE,
+  startDate: process.env.START_DATE || '2024-08-11',
   database: {
     client: 'postgres',
     connection: {

@@ -77,7 +77,6 @@ export class RepositoryMonitor {
 
       await this.database.deleteCommitsSince(repositoryId, date);
 
-
       console.log(`Reset Collection for ${owner}/${repo} since ${date}`);
       logger.info(`Reset Collection for ${owner}/${repo} since ${date}`);
     } catch (error) {
