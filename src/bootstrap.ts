@@ -1,14 +1,14 @@
 import cors from '@fastify/cors';
 import { container } from 'tsyringe';
 import Validator from 'validatorjs';
-//import EventSubscriber from './v1/modules/event/services/event-subscriber';
+// import EventSubscriber from './v1/modules/event/services/event-subscriber';
 import EventSubscriber from './v1/modules/common/event/services/event-subsriber';
-//import RetryAccountCreationService from './v1/modules/account/services/retry-account-creation.service';
-import initializeDatabase from './database';
+// import RetryAccountCreationService from './v1/modules/account/services/retry-account-creation.service';
 import loggerPlugin from '@shared/utils/logger/plugin';
 import { ErrorResponse } from '@shared/utils/response.util';
 import Logger from '@shared/utils/logger';
 import AppError from '@shared/error/app.error';
+import { OnStartupService } from './v1/modules/github/services/OnStartupService';
 
 // register event subscribers
 /*
@@ -21,7 +21,7 @@ import { UserTierUpgradeTierJobProcessor } from './v1/modules/customer/services/
 */
 
 function bootstrapApp(fastify) {
-  initializeDatabase();
+  intializeGithubMonitor();
 
   registerThirdPartyModules(fastify);
 
@@ -81,15 +81,19 @@ function registerCustomValidationRules() {
 }
 
 function initializeTasks() {
-  //container.resolve(RetryAccountCreationService).registerSchedule();
+  // container.resolve(RetryAccountCreationService).registerSchedule();
 }
 
 function initializeJobProccessor() {
- // container.resolve(UserTierUpgradeTierJobProcessor).initializeProccessor();
+  // container.resolve(UserTierUpgradeTierJobProcessor).initializeProccessor();
 }
 
 function subscribeToExternalEvents() {
   container.resolve(EventSubscriber).subscribeToTopics();
+}
+
+function intializeGithubMonitor() {
+  container.resolve(OnStartupService).updateConfig();
 }
 
 function setErrorHandler(fastify) {

@@ -1,7 +1,7 @@
 import { GithubApiService } from './GithubApiService';
 import { IDatabase } from '../Interfaces/IDatabase';
 import cron from 'node-cron';
-import { repositoryEvents, CommitEvent, RepositoryUpdateEvent } from '../Events/repositoryEvents';
+import { repositoryEvents, CommitEvent, RepositoryUpdateEvent } from '../events/repositoryEvents';
 import { injectable } from 'tsyringe';
 import logger from '@shared/utils/logger';
 import DatabaseError from '@shared/error/database.error';
@@ -96,6 +96,46 @@ export class RepositoryMonitor {
         throw new Error('Error Connecting to Github');
       }
     }
+  }
+
+  async seedDatabase(owner: string, repo: string, startDate?: string): Promise<void> {
+    try {
+      logger.info(`Seeding database with initial data for ${owner}/${repo}`);
+      console.log(`Seeding database with initial data for ${owner}/${repo}`);
+
+      const repoInfo = await this.githubApiService.getRepositoryInfo(owner, repo);
+      const repositoryId = await this.database.saveRepository(repoInfo);
+
+      const commits = await this.githubApiService.getCommits(owner, repo, startDate);
+
+      for (const commit of commits) {
+        const commitExists = await this.database.commitExists(repositoryId, commit.sha);
+        if (!commitExists) {
+          await this.database.saveCommit(repositoryId, commit);
+
+          const commitEvent: CommitEvent = { repositoryId, commit };
+          repositoryEvents.emitNewCommit(commitEvent);
+        }
+      }
+
+      await this.cacheService.clearRepositoryCache(owner, repo);
+
+      const updateEvent: RepositoryUpdateEvent = { owner, repo, updatedAt: new Date() };
+      repositoryEvents.emitRepositoryUpdated(updateEvent);
+
+      console.log(`Finished seeding database for ${owner}/${repo}`);
+    } catch (error) {
+      if (error instanceof DatabaseError) {
+        throw new Error('Database Error while Saving in the database');
+      } else {
+        throw new Error('Error Connecting to Github');
+      }
+    }
+  }
+
+  async initializeAndMonitor(owner: string, repo: string, cronExpression: string, startDate?: string): Promise<void> {
+    await this.seedDatabase(owner, repo, startDate);
+    await this.monitorRepository(owner, repo, cronExpression, startDate);
   }
 
   stopMonitoring(): void {

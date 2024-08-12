@@ -27,18 +27,14 @@ export class GithubApiService {
     }
   }
 
-  async getCommits(
-    owner: string,
-    repo: string,
-    since?: string,
-    page: number = 1,
-    perPage: number = 30,
-  ): Promise<any[]> {
+  async getCommits(owner: string, repo: string, since?: string): Promise<any[]> {
     try {
       const nextPattern = /(?<=<)([\S]*)(?=>; rel="Next")/i;
       let pagesRemaining = true;
       let data: any = [];
       let url = `/repos/${owner}/${repo}/commits`;
+      let page = 1;
+      const perPage = 100;
       const params: any = { page, per_page: perPage };
       if (since) {
         params.since = since;
@@ -57,6 +53,7 @@ export class GithubApiService {
 
         if (pagesRemaining) {
           url = linkHeader.match(nextPattern)[0];
+          page++;
         }
       }
 

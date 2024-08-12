@@ -38,6 +38,12 @@ export class PostgresqlDatabase implements IDatabase {
         table.integer('open_issues_count').notNullable();
         table.integer('watchers_count').notNullable();
         table.timestamps(true, true);
+
+        // Add indexes
+        table.index('name');
+        table.index('language');
+        table.index('stars_count');
+        table.index('forks_count');
       });
     }
 
@@ -52,6 +58,11 @@ export class PostgresqlDatabase implements IDatabase {
         table.dateTime('date').notNullable();
         table.string('url').notNullable();
         table.timestamps(true, true);
+
+        table.index('repository_id');
+        table.index('sha');
+        table.index('author');
+        table.index('date');
       });
     }
   }
