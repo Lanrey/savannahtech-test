@@ -7,7 +7,7 @@
   "scripts": {
     "start:dev": "nodemon",
     "start": "npm run build && node dist/server.js",
-    "build": "NODE_ENV=production tsc --resolveJsonModule",
+    "build": "tsc",
     "postbuild": "copyfiles -u 1 \"src/**/*.proto\" dist",
     "prepare": "husky install",
     "test:with-db": "NODE_ENV=test npm run db:migrate && jest --runInBand --passWithNoTests",
