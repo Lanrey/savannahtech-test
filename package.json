@@ -6,8 +6,8 @@
   "author": "Retailloop Solution Limited",
   "scripts": {
     "start:dev": "nodemon",
-    "start": "node dist/server.js",
-    "build": "tsc",
+    "start": "npm run build & node dist/server.js",
+    "build": "NODE_ENV=production tsc --resolveJsonModule",
     "postbuild": "copyfiles -u 1 \"src/**/*.proto\" dist",
     "prepare": "husky install",
     "test:with-db": "NODE_ENV=test npm run db:migrate && jest --runInBand --passWithNoTests",
