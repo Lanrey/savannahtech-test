@@ -1,5 +1,5 @@
 import { IDatabase } from '../Interfaces/IDatabase';
-import { PostgresqlDatabase } from '../services/PostgresqlDatabase';
+import { PostgresqlDatabase } from '../services/postgres-database.service';
 import { injectable, container } from 'tsyringe';
 
 export enum DatabaseType {

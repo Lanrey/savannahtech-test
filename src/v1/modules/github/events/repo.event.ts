@@ -1,4 +1,4 @@
-import { repositoryEvents, CommitEvent, RepositoryUpdateEvent } from './repositoryEvents';
+import { repositoryEvents, CommitEvent, RepositoryUpdateEvent } from './repository.event';
 
 export function setupRepositoryEventHandlers() {
   repositoryEvents.on('newCommit', handleNewCommit);

@@ -1,5 +1,5 @@
-import { BaseModel } from './BaseModel';
-import { Repository } from './Repository';
+import { BaseModel } from './base.model';
+import { Repository } from './repository.model';
 
 export class Commit extends BaseModel {
   static tableName = 'commits';

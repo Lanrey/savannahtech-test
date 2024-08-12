@@ -1,7 +1,7 @@
 import { injectable } from 'tsyringe';
 import { FastifyReply, FastifyRequest } from 'fastify';
 import { SuccessResponse } from '@shared/utils/response.util';
-import { createDatabase, DatabaseType } from '../factories/DatabaseFactory';
+import { createDatabase, DatabaseType } from '../factories/database.factory';
 import config from '@config/config';
 
 @injectable()

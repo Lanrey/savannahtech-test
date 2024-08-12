@@ -1,9 +1,9 @@
 import { injectable, container } from 'tsyringe';
 import { FastifyReply, FastifyRequest } from 'fastify';
 import { SuccessResponse } from '@shared/utils/response.util';
-import { createDatabase, DatabaseType } from '../factories/DatabaseFactory';
-import { RepositoryMonitor } from '../services/RepositoryMonitor';
-import { setupRepositoryEventHandlers } from '../events/repositoryEventHandlers';
+import { createDatabase, DatabaseType } from '../factories/database.factory';
+import { RepositoryMonitor } from '../services/repository-monitor.service';
+import { setupRepositoryEventHandlers } from '../events/repo.event';
 import config from '../../../../config/config';
 import ConfigDto from '../dtos/config.dto';
 import PublishEvent from '../../common/event/services/publish-event-service';

@@ -1,6 +1,6 @@
 import logger from '@shared/utils/logger';
 import { injectable } from 'tsyringe';
-import { RepositoryMonitor } from '../github/services/RepositoryMonitor';
+import { RepositoryMonitor } from '../github/services/repository-monitor.service';
 @injectable()
 class SeedTopicService {
   constructor(private readonly repoMonitor: RepositoryMonitor) {}

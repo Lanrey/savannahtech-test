@@ -1,7 +1,7 @@
-import { GithubApiService } from './GithubApiService';
+import { GithubApiService } from './github-api.service';
 import { IDatabase } from '../Interfaces/IDatabase';
 import cron from 'node-cron';
-import { repositoryEvents, CommitEvent, RepositoryUpdateEvent } from '../events/repositoryEvents';
+import { repositoryEvents, CommitEvent, RepositoryUpdateEvent } from '../events/repository.event';
 import { injectable, inject } from 'tsyringe';
 import logger from '@shared/utils/logger';
 import DatabaseError from '@shared/error/database.error';

@@ -55,9 +55,9 @@ import loggerPlugin from '@shared/utils/logger/plugin';
 import { ErrorResponse } from '@shared/utils/response.util';
 import Logger from '@shared/utils/logger';
 import AppError from '@shared/error/app.error';
-import { OnStartupService } from './v1/modules/github/services/OnStartupService';
+import { OnStartupService } from './v1/modules/github/services/startup.service';
 import { IDatabase } from './v1/modules/github/Interfaces/IDatabase';
-import { createDatabase, DatabaseType } from './v1/modules/github/factories/DatabaseFactory';
+import { createDatabase, DatabaseType } from './v1/modules/github/factories/database.factory';
 import config from '@config/config';
 // import appConfig from './config/app.config';
 import RouteVersion from '@config/route.config';
@@ -66,7 +66,6 @@ import healthRoute from './v1/modules/health/health.route';
 import configRoute from './v1/modules/github/routes/config';
 import repoRoute from './v1/modules/github/routes/repo';
 import { ReposotoryController } from './v1/modules/github/controllers/repository';
-
 
 class App {
   private fastify: FastifyInstance<Server, IncomingMessage, ServerResponse>;
@@ -104,7 +103,7 @@ class App {
   private async initializeDatabase() {
     this.database = createDatabase(config.databaseType as DatabaseType);
     await this.database.init();
-    container.registerInstance<IDatabase>('database', this.database);;
+    container.registerInstance<IDatabase>('database', this.database);
   }
 
   private registerDependencies() {

@@ -1,6 +1,6 @@
 import { injectable, container } from 'tsyringe';
-import { createDatabase, DatabaseType } from '../factories/DatabaseFactory';
-import { RepositoryMonitor } from './RepositoryMonitor';
+import { createDatabase, DatabaseType } from '../factories/database.factory';
+import { RepositoryMonitor } from './repository-monitor.service';
 import config from '@config/config';
 import { IDatabase } from '../Interfaces/IDatabase';
 import PublishEvent from '../../common/event/services/publish-event-service';

@@ -19,7 +19,8 @@
       "@config/*": ["src/config/*"],
       "@shared/*": ["src/shared/*"],
       "@utils/*": ["src/shared/utils/*"],
-      "@github/*": ["v1/modules/github/*"]
+      "@github/*": ["v1/modules/github/*"],
+      "@/*": ["src/*"]
     }
   },
   "include": ["src/**/*.ts", "src/**/*.json"],
