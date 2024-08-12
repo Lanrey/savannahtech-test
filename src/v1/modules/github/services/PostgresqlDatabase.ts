@@ -100,17 +100,19 @@ export class PostgresqlDatabase implements IDatabase {
     }
   }
 
-  async saveCommit(repositoryId: number, commit: any): Promise<void> {
+  async saveCommit(repositoryId: number, commits: any[]): Promise<void> {
     try {
       await transaction(Commit.knex(), async (trx) => {
-        await Commit.query(trx).insert({
+        const commitsData = commits.map((commit) => ({
           repository_id: repositoryId,
           sha: commit.sha,
           message: commit.commit.message,
           author: commit.commit.author.name,
           date: commit.commit.author.date,
           url: commit.html_url,
-        });
+        }));
+        await Commit.query(trx).insert(commitsData).onConflict('sha').ignore();
+
         const repository = await Repository.query(trx).findById(repositoryId);
 
         return repository;

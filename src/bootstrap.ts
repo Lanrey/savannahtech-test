@@ -1,3 +1,4 @@
+/*
 import cors from '@fastify/cors';
 import { container } from 'tsyringe';
 import Validator from 'validatorjs';
@@ -10,24 +11,28 @@ import Logger from '@shared/utils/logger';
 import AppError from '@shared/error/app.error';
 import { OnStartupService } from './v1/modules/github/services/OnStartupService';
 // import { PostgresqlDatabase } from './v1/modules/github/services/PostgresqlDatabase';
-// import { IDatabase } from './v1/modules/github/Interfaces/IDatabase';
+import { IDatabase } from './v1/modules/github/Interfaces/IDatabase';
+import { createDatabase, DatabaseType } from './v1/modules/github/factories/DatabaseFactory';
+import config from '@config/config';
 
 // register event subscribers
-/*
+
 import './v1/modules/common/messaging/services/messaging.service';
 import './v1/modules/common/firebase/events/firebase-event.subscriber';
 import './v1/modules/onboarding/services/send-user-welcome-email.service';
 import './v1/modules/user/services/delete-profile-picture.service';
 import { UserTierUpgradeTierJobProcessor } from './v1/modules/customer/services/handle-user-tier-upgrade-job.service';
 
-*/
 
-function bootstrapApp(fastify) {
-  // initializeDatabase();
+
+async function bootstrapApp(fastify) {
+  await initializeDatabase();
+
+  registerDependencies();
 
   subscribeToExternalEvents();
 
-  intializeGithubMonitor();
+  await intializeGithubMonitor();
 
   registerThirdPartyModules(fastify);
 
@@ -88,13 +93,11 @@ function initializeTasks() {
   // container.resolve(RetryAccountCreationService).registerSchedule();
 }
 
-/*
-
-function initializeDatabase() {
-  container.registerSingleton<IDatabase>('Database', PostgresqlDatabase);
+async function initializeDatabase() {
+  const database = createDatabase(config.databaseType as DatabaseType);
+  await database.init();
+  container.registerInstance<IDatabase>('database', database);
 }
-
-*/
 
 function initializeJobProccessor() {
   // container.resolve(UserTierUpgradeTierJobProcessor).initializeProccessor();
@@ -104,8 +107,13 @@ function subscribeToExternalEvents() {
   container.resolve(EventSubscriber).subscribeToTopics();
 }
 
-function intializeGithubMonitor() {
-  container.resolve(OnStartupService).updateConfig();
+async function intializeGithubMonitor() {
+  await container.resolve(OnStartupService).updateConfig();
+}
+
+function registerDependencies() {
+  container.registerSingleton(EventSubscriber);
+  container.registerSingleton(OnStartupService);
 }
 
 function setErrorHandler(fastify) {
@@ -121,3 +129,4 @@ function setErrorHandler(fastify) {
 }
 
 export default bootstrapApp;
+*/

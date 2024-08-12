@@ -44,7 +44,7 @@ export class GithubApiService {
       }
 
       while (pagesRemaining) {
-        const response = await this.githubHttpClient.get(`${url}`, { params });
+        const response = await this.githubHttpClient.get(`${url}?page=${page}&perPage=${perPage}&since=${since}`);
 
         const parsedData = this.parseData(response.data);
         data = [...data, ...parsedData];
@@ -57,12 +57,8 @@ export class GithubApiService {
         if (pagesRemaining) {
           url = linkHeader.match(nextPattern)[0];
           page++;
-
-          console.log('fetching data', data);
         }
       }
-
-      console.log('final data', data);
 
       return data;
     } catch (error) {

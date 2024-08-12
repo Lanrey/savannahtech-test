@@ -18,6 +18,10 @@ export class ConfigController {
     this.publishEvent = container.resolve(PublishEvent);
   }
 
+  setRepoMonitor(repoMonitor: RepositoryMonitor) {
+    this.repoMonitor = repoMonitor;
+  }
+
   dynamicConfig = async (req: FastifyRequest<{ Body: ConfigDto }>, res: FastifyReply) => {
     try {
       const { defaultOwner, defaultRepo, databaseType, cronSchedule, startDate } = req.body;

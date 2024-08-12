@@ -2,19 +2,18 @@ import { FastifyPluginAsync } from 'fastify';
 import { container } from 'tsyringe';
 import { ReposotoryController } from '../controllers/repository';
 
-const repoController = container.resolve(ReposotoryController);
-
+const reposController = container.resolve(ReposotoryController);
 const repoRoute: FastifyPluginAsync = async (fastify) => {
   fastify.route({
     method: 'GET',
-    url: '/github-monitor/top-authors/:count',
-    handler: repoController.getTopCommitAuthors,
+    url: '/github-monitor/top-authors',
+    handler: reposController.getTopCommitAuthors,
   });
 
   fastify.route({
     method: 'GET',
-    url: '/github-monitor/commits/:repositoryName',
-    handler: repoController.getCommitsByRepository,
+    url: '/github-monitor/commits',
+    handler: reposController.getCommitsByRepository,
   });
 };
 

@@ -1,28 +1,31 @@
 import { injectable } from 'tsyringe';
 import { FastifyReply, FastifyRequest } from 'fastify';
 import { SuccessResponse } from '@shared/utils/response.util';
-import { PostgresqlDatabase } from '../services/PostgresqlDatabase';
+import { createDatabase, DatabaseType } from '../factories/DatabaseFactory';
+import config from '@config/config';
 
 @injectable()
 export class ReposotoryController {
-  constructor(private readonly postgresqlDatabase: PostgresqlDatabase) {}
+  constructor() {}
 
-  async getTopCommitAuthors(req: FastifyRequest<{ Params: { count: string } }>, res: FastifyReply) {
-    const count = parseInt(req.params.count, 10);
+  async getTopCommitAuthors(req: FastifyRequest<{ Querystring: { count: string } }>, res: FastifyReply) {
+    const count = parseInt(req.query.count, 10);
     if (isNaN(count) || count <= 0) {
       res.status(400).send({ error: 'Invalid count parameter' });
     }
 
-    const authors = await this.postgresqlDatabase.getTopCommitAuthors(count);
+    const database = createDatabase(config.databaseType as DatabaseType);
 
-    res.send(SuccessResponse(`Top ${count} authors retrieved successufully`, authors));
+    const authors = await database.getTopCommitAuthors(count);
+
+    res.send(SuccessResponse(`Top ${count} authors retrieved successfully`, authors));
   }
 
   async getCommitsByRepository(
-    req: FastifyRequest<{ Params: { repositoryName: string }; Querystring: { limit?: string } }>,
+    req: FastifyRequest<{ Querystring: { limit?: string; repositoryName: string } }>,
     res: FastifyReply,
   ) {
-    const { repositoryName } = req.params;
+    const { repositoryName } = req.query;
     const limit = req.query.limit ? parseInt(req.query.limit, 10) : undefined;
 
     if (limit !== undefined && (isNaN(limit) || limit <= 0)) {
@@ -30,8 +33,10 @@ export class ReposotoryController {
       return;
     }
 
-    const commits = await this.postgresqlDatabase.getCommitsByRepository(repositoryName, limit);
+    const database = createDatabase(config.databaseType as DatabaseType);
 
-    res.send(SuccessResponse('Commits for Repository Retrieved Sucessfully', commits));
+    const commits = await database.getCommitsByRepository(repositoryName, limit);
+
+    res.send(SuccessResponse('Commits for Repository Retrieved Successfully', commits));
   }
 }

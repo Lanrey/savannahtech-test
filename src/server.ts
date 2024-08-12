@@ -18,10 +18,15 @@ process
     process.exit(0);
   });
 
-app
-  .listen(appConfig.server.port)
-  .then((address) => logger.info(`${appConfig.app.name} started on ${address}`))
-  .catch((err) => {
-    logger.error({ err });
+async function startServer() {
+  try {
+    await app.initialize();
+    const address = await app.listen(appConfig.server.port);
+    logger.info(`${appConfig.app.name} started on ${address}`);
+  } catch (error) {
+    logger.error({ error });
     process.exit(1);
-  });
+  }
+}
+
+startServer();

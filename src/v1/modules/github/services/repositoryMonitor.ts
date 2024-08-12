@@ -98,6 +98,10 @@ export class RepositoryMonitor {
 
       const commits = await this.githubApiService.getCommits(owner, repo, startDate);
 
+      await this.database.saveCommit(repositoryId, commits);
+
+      /*
+
       for (const commit of commits) {
         const commitExists = await this.database.commitExists(repositoryId, commit.sha);
         if (!commitExists) {
@@ -107,6 +111,7 @@ export class RepositoryMonitor {
           repositoryEvents.emitNewCommit(commitEvent);
         }
       }
+    */
 
       const updateEvent: RepositoryUpdateEvent = { owner, repo, updatedAt: new Date() };
       repositoryEvents.emitRepositoryUpdated(updateEvent);

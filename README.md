@@ -105,6 +105,9 @@ For development with hot-reloading: npm run start:dev
 Run the test suite: npm test
 For tests with database interactions: npm run test:with-db
 
+## Postman
+https://lunar-trinity-430229.postman.co/workspace/Team-Workspace~34e62003-3b98-4049-856f-fd72361d5f1e/collection/23325006-6ddf75c0-f54d-41f2-b5e9-cab6d678aef6?action=share&creator=23325006&active-environment=23325006-4ea21514-be24-48c7-a8bb-1ebcc4da495e
+
 ## Contributing
 
 1. Fork the repository
